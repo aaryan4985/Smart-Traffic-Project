@@ -1,24 +1,42 @@
 import requests
+import pandas as pd
 
-# OpenStreetMap Overpass API endpoint
+# OpenStreetMap Overpass API URL
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-# Define the Overpass Query to get traffic signals around a location (e.g., New York)
+# Query to fetch roads & traffic signals
 query = """
 [out:json];
-node(around:2000,40.7128,-74.0060)[highway~"traffic_signals|crossing"];
-out;
+way(around:2000,40.7128,-74.0060)[highway];
+out body;
 """
 
-
-
-# Make the request
+# Fetch data from OSM
 response = requests.get(OVERPASS_URL, params={"data": query})
 
 # Check if request was successful
 if response.status_code == 200:
     data = response.json()
-    print("✅ Traffic Data Fetched Successfully!")
-    print(data)  # Print fetched data
+    elements = data.get("elements", [])
+
+    # Extract relevant details
+    traffic_data = []
+    for element in elements:
+        if "tags" in element:
+            traffic_data.append({
+                "id": element.get("id"),
+                "type": element.get("type"),
+                "name": element["tags"].get("name", "Unknown"),
+                "highway": element["tags"].get("highway", "Unknown"),
+                "maxspeed": element["tags"].get("maxspeed", "Unknown"),
+                "lanes": element["tags"].get("lanes", "Unknown"),
+                "oneway": element["tags"].get("oneway", "Unknown"),
+            })
+
+    # Convert to DataFrame & Save to CSV
+    df = pd.DataFrame(traffic_data)
+    df.to_csv("traffic_data.csv", index=False)
+    print("✅ Traffic Data Saved to 'traffic_data.csv'!")
+
 else:
     print("❌ Failed to fetch data:", response.status_code)
