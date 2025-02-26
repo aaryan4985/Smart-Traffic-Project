@@ -1,27 +1,50 @@
-import folium
 import pandas as pd
 
-# Sample data for traffic points
-data = {
-    "latitude": [40.7128, 40.7138, 40.7148],
-    "longitude": [-74.0060, -74.0070, -74.0080]
+# Load the CSV file
+df = pd.read_csv("traffic_data.csv")
+
+# Print available columns to debug
+print("📜 Available Columns:", df.columns)
+
+# Rename columns if needed (modify based on actual column names)
+column_mapping = {
+    "lat": "latitude",
+    "Latitude": "latitude",
+    "Lat": "latitude",
+    "lon": "longitude",
+    "Longitude": "longitude",
+    "Lng": "longitude"
 }
-df = pd.DataFrame(data)
 
-# Define map center (New York coordinates)
-map_center = [40.7128, -74.0060]
-traffic_map = folium.Map(location=map_center, zoom_start=13)
+df.rename(columns=column_mapping, inplace=True)
 
-# Add traffic points to the map
-for _, row in df.iterrows():
-    folium.CircleMarker(
-        location=(row["latitude"], row["longitude"]),  
-        radius=5,  
-        color="red",
-        fill=True,
-        fill_color="red",
-    ).add_to(traffic_map)
+# Ensure required columns exist
+required_columns = ["highway", "maxspeed", "lanes", "oneway", "latitude", "longitude"]
 
-# Save map as an HTML file
-traffic_map.save("traffic_map.html")
-print("✅ Traffic heatmap saved as 'traffic_map.html'")
+missing_columns = [col for col in required_columns if col not in df.columns]
+if missing_columns:
+    print(f"⚠️ Missing columns: {missing_columns}. Adding default values.")
+    
+    # Assign default values if missing (for testing purposes)
+    if "latitude" in missing_columns:
+        df["latitude"] = 40.7128  # Default to New York
+    if "longitude" in missing_columns:
+        df["longitude"] = -74.0060
+    if "highway" in missing_columns:
+        df["highway"] = "unknown"
+    if "maxspeed" in missing_columns:
+        df["maxspeed"] = 0
+    if "lanes" in missing_columns:
+        df["lanes"] = 1
+    if "oneway" in missing_columns:
+        df["oneway"] = False
+
+# Select the required columns
+df = df[required_columns]
+
+# Display the first few rows to confirm
+print("✅ Processed Data Preview:\n", df.head())
+
+# Save cleaned data (optional)
+df.to_csv("cleaned_traffic_data.csv", index=False)
+print("✅ Cleaned data saved to 'cleaned_traffic_data.csv'")
