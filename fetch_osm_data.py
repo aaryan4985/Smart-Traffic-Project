@@ -6,9 +6,11 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 # Define the Overpass Query to get traffic signals around a location (e.g., New York)
 query = """
 [out:json];
-node(around:1000,40.7128,-74.0060)[highway=traffic_signals];
+node(around:2000,40.7128,-74.0060)[highway~"traffic_signals|crossing"];
 out;
 """
+
+
 
 # Make the request
 response = requests.get(OVERPASS_URL, params={"data": query})
